@@ -19,7 +19,7 @@ func (s ChatService) RunChatCompletionStream(req entity.SendChatMessageRequest, 
 	stream.MessageCompletionStream.EndStream(topic)
 
 	// i decided to stream only for one who listening
-	// if not listening there, so no clue to stream for
+	// if not listening there, so no sense to stream
 	if stream.MessageCompletionStream.DoesStreamExist(topic) {
 		go s.LLM.StartChatCompletionStream(req, topic)
 	} else {
