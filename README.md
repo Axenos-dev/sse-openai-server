@@ -6,8 +6,8 @@ This document provides instructions on how to run and interact with this server.
 
 - [Running the API](#running-the-api)
 - [API Endpoints](#api-endpoints)
-  - [/v1/chat/:topic](#/v1/sse/:topic)
-  - [/v1/sse/:topic](#/v1/sse/:topic)
+  - [/v1/chat/:topic]
+  - [/v1/sse/:topic]
 
 
 ## Running the API
