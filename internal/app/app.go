@@ -2,23 +2,22 @@ package app
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/Axenos-dev/sse-openai-server/config"
 	"github.com/Axenos-dev/sse-openai-server/internal/controllers"
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 )
 
 func Run() error {
-	r := gin.Default()
+	app := fiber.New()
 
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
+	app.Get("/ping", func(c *fiber.Ctx) error {
+		return c.JSON(map[string]string{
 			"message": "pong",
 		})
 	})
 
-	controllers.InitControllers(r)
+	controllers.InitControllers(app)
 
-	return r.Run(fmt.Sprintf(":%s", config.Config.Port))
+	return app.Listen(fmt.Sprintf(":%s", config.Config.Port))
 }

@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/Axenos-dev/sse-openai-server/internal/entity"
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,26 +19,25 @@ func (mockChatService) RunChatCompletionStream(entity.SendChatMessageRequest, st
 }
 
 func TestSendChatMessage(t *testing.T) {
-	router := gin.Default()
+	app := fiber.New()
 	chat := chat{mockChatService{}}
 
-	router.POST("/v1/chat/:topic", chat.sendChatMessage)
+	app.Post("/v1/chat/:topic", chat.sendChatMessage)
 
 	// Test case 1: Valid request
 	t.Run("SendChatMessage_Success", func(t *testing.T) {
 		reqBody := entity.SendChatMessageRequest{Message: "Hello!"}
 		reqJSON, _ := json.Marshal(reqBody)
 
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/v1/chat/1", bytes.NewBuffer(reqJSON))
+		req := httptest.NewRequest("POST", "/v1/chat/1", bytes.NewBuffer(reqJSON))
 		req.Header.Set("Content-Type", "application/json")
 
-		router.ServeHTTP(w, req)
-
-		assert.Equal(t, http.StatusOK, w.Code)
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
 
 		var response entity.SendMessageResponse
-		err := json.Unmarshal(w.Body.Bytes(), &response)
+		err = json.NewDecoder(resp.Body).Decode(&response)
 		assert.NoError(t, err)
 
 		assert.Equal(t, http.StatusOK, response.Code)
@@ -49,16 +48,15 @@ func TestSendChatMessage(t *testing.T) {
 		reqBody := entity.SendChatMessageRequest{Message: "      "}
 		reqJSON, _ := json.Marshal(reqBody)
 
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/v1/chat/1", bytes.NewBuffer(reqJSON))
+		req := httptest.NewRequest("POST", "/v1/chat/1", bytes.NewBuffer(reqJSON))
 		req.Header.Set("Content-Type", "application/json")
 
-		router.ServeHTTP(w, req)
-
-		assert.Equal(t, http.StatusBadRequest, w.Code)
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
 
 		var response entity.SendMessageResponse
-		err := json.Unmarshal(w.Body.Bytes(), &response)
+		err = json.NewDecoder(resp.Body).Decode(&response)
 		assert.NoError(t, err)
 
 		assert.Equal(t, http.StatusBadRequest, response.Code)

@@ -1,64 +1,66 @@
 package sse
 
 import (
+	"bufio"
+	"encoding/json"
 	"fmt"
 
 	"github.com/Axenos-dev/sse-openai-server/internal/entity"
 	"github.com/Axenos-dev/sse-openai-server/internal/stream"
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
+	"github.com/valyala/fasthttp"
 )
 
 type sse struct{}
 
-func RegHandlers(r *gin.RouterGroup) {
+func RegHandlers(r fiber.Router) {
 	sse := sse{}
 
-	r.GET("/sse/:topic", sse.serverSentEvents)
+	r.Get("/sse/:topic", sse.serverSentEvents)
 }
 
-func (sse) serverSentEvents(c *gin.Context) {
-	c.Header("Content-Type", "text/event-stream")
-	c.Header("Cache-Control", "no-cache")
-	c.Header("Connection", "keep-alive")
-	c.Header("Transfer-Encoding", "chunked")
+func (sse) serverSentEvents(c *fiber.Ctx) error {
+	c.Set(fiber.HeaderContentType, "text/event-stream")
+	c.Set(fiber.HeaderCacheControl, "no-cache")
+	c.Set(fiber.HeaderConnection, "keep-alive")
+	c.Set(fiber.HeaderTransferEncoding, "chunked")
 
-	topic := c.Param("topic")
-	if len(topic) == 0 {
-		c.SSEvent(topic, entity.MessageCompletionStream{
-			Event:   entity.StreamEventError,
-			Topic:   topic,
-			Message: "empty topic",
-		})
-		c.Writer.Flush()
-		return
-	}
+	topic := c.Params("topic")
+	ctxDone := c.Context().Done()
 
-	if err := stream.MessageCompletionStream.InitNewStream(topic); err != nil {
-		c.SSEvent(topic, entity.MessageCompletionStream{
-			Event:   entity.StreamEventError,
-			Topic:   topic,
-			Message: fmt.Sprintf("can not create listening channel: %v", err),
-		})
-		c.Writer.Flush()
-		return
-	} else {
-		c.SSEvent(topic, entity.MessageCompletionStream{
-			Event:   entity.StreamEventConnectionEstablished,
-			Topic:   topic,
-			Message: "Connection established!",
-		})
-		c.Writer.Flush()
-	}
-	defer stream.MessageCompletionStream.CloseStream(topic)
+	streamErr := stream.MessageCompletionStream.InitNewStream(topic)
 
-	for {
-		select {
-		case msg := <-stream.MessageCompletionStream.Chan(topic):
-			c.SSEvent(topic, msg)
-			c.Writer.Flush()
+	c.Context().SetBodyStreamWriter(fasthttp.StreamWriter(func(w *bufio.Writer) {
+		defer stream.MessageCompletionStream.CloseStream(topic)
 
-		case <-c.Writer.CloseNotify():
+		if streamErr != nil {
+			json.NewEncoder(w).Encode(entity.MessageCompletionStream{
+				Event:   entity.StreamEventError,
+				Topic:   topic,
+				Message: fmt.Sprintf("can not create listening channel: %v", streamErr),
+			})
+			w.Flush()
 			return
+		} else {
+			json.NewEncoder(w).Encode(entity.MessageCompletionStream{
+				Event:   entity.StreamEventConnectionEstablished,
+				Topic:   topic,
+				Message: "Connection established!",
+			})
+			w.Flush()
 		}
-	}
+
+		for {
+			select {
+			case msg := <-stream.MessageCompletionStream.Chan(topic):
+				json.NewEncoder(w).Encode(msg)
+				w.Flush()
+
+			case <-ctxDone:
+				return
+			}
+		}
+	}))
+
+	return nil
 }
