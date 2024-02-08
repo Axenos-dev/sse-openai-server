@@ -1,0 +1,45 @@
+version: '3.9'
+
+volumes:
+  postgres-data:
+
+services:
+  postgres-db:
+    image: postgres:latest
+    container_name: postgres_db
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+    environment:
+      POSTGRES_DB: openai_chats
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: 123pass321
+    ports:
+      - 5432:5432
+    networks:
+      - local
+
+  api:
+    depends_on:
+      - postgres-db
+    build: .
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=123pass321
+      - POSTGRES_DB=openai_chats
+      - POSTGRES_HOST=postgres_db
+      - POSTGRES_PORT=5432
+      - PORT=8080
+    env_file:
+      - .env
+    ports:
+      - 8080:8080
+    restart: 
+      on-failure
+    networks:
+      - local
+
+networks:
+  local:
+    driver: bridge

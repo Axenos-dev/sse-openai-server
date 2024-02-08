@@ -26,7 +26,6 @@ func (sse) serverSentEvents(c *fiber.Ctx) error {
 	c.Set(fiber.HeaderTransferEncoding, "chunked")
 
 	topic := c.Params("topic")
-	ctxDone := c.Context().Done()
 
 	streamErr := stream.MessageCompletionStream.InitNewStream(topic)
 
@@ -47,16 +46,16 @@ func (sse) serverSentEvents(c *fiber.Ctx) error {
 				Topic:   topic,
 				Message: "Connection established!",
 			})
-			w.Flush()
+
+			if err := w.Flush(); err != nil {
+				return
+			}
 		}
 
 		for {
-			select {
-			case msg := <-stream.MessageCompletionStream.Chan(topic):
-				json.NewEncoder(w).Encode(msg)
-				w.Flush()
-
-			case <-ctxDone:
+			msg := <-stream.MessageCompletionStream.Chan(topic)
+			json.NewEncoder(w).Encode(msg)
+			if err := w.Flush(); err != nil {
 				return
 			}
 		}

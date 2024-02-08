@@ -9,6 +9,14 @@ const (
 	StreamEventError                 StreamEvent = "error"
 )
 
+type MessageStatus int
+
+const (
+	MessageStatusDone MessageStatus = iota
+	MessageStatusInterrupted
+	MessageStatusInProccess
+)
+
 type StreamData struct {
 	Content string `json:"content"`
 }
@@ -18,7 +26,8 @@ type MessageCompletionStream struct {
 	Data  StreamData `json:"data"`
 
 	// basically describes what kind of data is been recieved on client
-	Event StreamEvent `json:"event"`
+	Event  StreamEvent   `json:"event"`
+	Status MessageStatus `json:"status"`
 
 	Message string `json:"message,omitempty"`
 }

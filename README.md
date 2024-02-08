@@ -10,20 +10,25 @@ This document provides instructions on how to run and interact with this server.
 
 ## Running the API
 
-1. Install dependencies:
+1. ### Install dependencies:
 
     ```bash
     make deps
     ```
 
-2. Set environment variables:
+2. ### Set environment variables:
 
     ```bash
     export PORT=8080;
     export OPEN_AI_API_KEY=your_openai_api_key;
+    export POSTGRES_HOST=127.0.0.1;
+    export POSTGRES_PORT=5432;
+    export POSTGRES_NAME=username;
+    export POSTGRES_PASSWORD=password;
+    export POSTGRES_DB=some_db;
     ```
 
-3. Run the API:
+3. ### Run the API:
 
     ```bash
     make build;
@@ -35,6 +40,13 @@ This document provides instructions on how to run and interact with this server.
     ```bash
     go run main.go
     ```
+
+    - or run it via docker (place OPEN_AI_API_KEY in .env file)
+    
+    ```bash
+    docker-compose up
+    ```
+    it will run at port :8080
 
 
 The API should now be running on `http://localhost:PORT`.

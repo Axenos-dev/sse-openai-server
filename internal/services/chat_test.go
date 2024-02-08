@@ -15,10 +15,8 @@ func (mockLLM) StartChatCompletionStream(entity.SendChatMessageRequest, string) 
 }
 
 func TestRunChatCompletionStream(t *testing.T) {
-	mockLLMInstance := mockLLM{}
-
 	chatService := ChatService{
-		LLM: mockLLMInstance,
+		LLM: mockLLM{},
 	}
 
 	topic := "6"

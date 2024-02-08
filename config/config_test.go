@@ -25,6 +25,11 @@ func TestFillConfig(t *testing.T) {
 		os.Setenv("PORT", "8080")
 		os.Setenv("OPEN_AI_API_KEY", "test-api-key")
 		os.Setenv("MAX_TOKENS", "30")
+		os.Setenv("POSTGRES_HOST", "127.0.0.1")
+		os.Setenv("POSTGRES_PORT", "1234")
+		os.Setenv("POSTGRES_DB", "test")
+		os.Setenv("POSTGRES_USER", "root")
+		os.Setenv("POSTGRES_PASSWORD", "password")
 
 		err := FillConfig()
 		assert.NoError(t, err)
@@ -33,6 +38,13 @@ func TestFillConfig(t *testing.T) {
 			OpenAI: OpenAIConfig{
 				ApiKey:    "test-api-key",
 				MaxTokens: 30,
+			},
+			PostgreSQL: PostgreSqlConfig{
+				Host:     "127.0.0.1",
+				Port:     "1234",
+				Database: "test",
+				User:     "root",
+				Password: "password",
 			},
 			Port: "8080",
 		}

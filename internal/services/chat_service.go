@@ -7,12 +7,12 @@ import (
 	"github.com/Axenos-dev/sse-openai-server/internal/stream"
 )
 
-type LLM interface {
+type llm interface {
 	StartChatCompletionStream(req entity.SendChatMessageRequest, topic string)
 }
 
 type ChatService struct {
-	LLM LLM
+	LLM llm
 }
 
 func (s ChatService) RunChatCompletionStream(req entity.SendChatMessageRequest, topic string) error {
